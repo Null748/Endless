@@ -1,90 +1,98 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js';
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js";
+import { createMall } from "./world.js";
 
+// ------------------------------------------
 // SCENE
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x9da3a8);
-scene.fog = new THREE.Fog(0x9da3a8, 15, 100);
+// ------------------------------------------
 
-// CAMERA
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x9da6ad);
+scene.fog = new THREE.Fog(0x9da6ad, 35, 105);
+
 const camera = new THREE.PerspectiveCamera(
     75,
     window.innerWidth / window.innerHeight,
     0.1,
-    1000
+    180
 );
 
-camera.position.set(0, 1.7, 8);
+camera.position.set(0, 1.7, 35);
 
+// ------------------------------------------
 // RENDERER
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+// ------------------------------------------
+
+const renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    powerPreference: "high-performance"
+});
+
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+
 renderer.outputColorSpace = THREE.SRGBColorSpace;
+
 document.body.appendChild(renderer.domElement);
 
-// LIGHTING
-scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+// ------------------------------------------
+// BUILD THE MALL
+// ------------------------------------------
 
-const sunlight = new THREE.DirectionalLight(0xffffff, 2);
-sunlight.position.set(10, 20, 10);
-scene.add(sunlight);
+createMall(scene);
 
-// FLOOR
-const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(100, 100),
-    new THREE.MeshStandardMaterial({
-        color: 0x777777,
-        roughness: 0.8
-    })
-);
-
-floor.rotation.x = -Math.PI / 2;
-floor.receiveShadow = true;
-scene.add(floor);
-
-// TEST CUBE
-const cube = new THREE.Mesh(
-    new THREE.BoxGeometry(2, 2, 2),
-    new THREE.MeshStandardMaterial({ color: 0xcccccc })
-);
-
-cube.position.set(0, 1, 0);
-cube.castShadow = true;
-scene.add(cube);
-
+// ------------------------------------------
 // PLAYER CONTROLS
+// ------------------------------------------
+
 const keys = {};
 
 let yaw = 0;
 let pitch = 0;
 let locked = false;
+let paused = false;
 
-const playerSpeed = 5;
+const playerHeight = 1.7;
+const walkSpeed = 5;
+const sprintSpeed = 8;
 
-const overlay = document.createElement('div');
-overlay.id = 'start-overlay';
-overlay.innerHTML = `
-    <div class="start-content">
-        <h1>ENDLESS</h1>
-        <p>CLICK TO EXPLORE</p>
-        <span>WASD TO MOVE · MOUSE TO LOOK · ESC TO PAUSE</span>
-    </div>
-`;
+function updateCameraRotation() {
+    camera.rotation.order = "YXZ";
+    camera.rotation.y = yaw;
+    camera.rotation.x = pitch;
+}
 
-document.body.appendChild(overlay);
+function requestLock() {
+    if (document.pointerLockElement === renderer.domElement) {
+        return;
+    }
 
-overlay.addEventListener('click', () => {
-    renderer.domElement.requestPointerLock();
-});
+    if (renderer.domElement.requestPointerLock) {
+        renderer.domElement.requestPointerLock();
+    }
+}
 
-document.addEventListener('pointerlockchange', () => {
+document.addEventListener("pointerlockchange", () => {
     locked = document.pointerLockElement === renderer.domElement;
-    overlay.style.display = locked ? 'none' : 'flex';
+
+    if (locked) {
+        overlay.style.display = "none";
+        paused = false;
+    } else {
+        overlay.style.display = "flex";
+    }
 });
 
-document.addEventListener('mousemove', (event) => {
+document.addEventListener("pointerlockerror", () => {
+    console.warn("Pointer lock could not be activated in this browser.");
+});
+
+document.addEventListener("mousemove", (event) => {
     if (!locked) return;
 
     const sensitivity = 0.002;
@@ -92,30 +100,81 @@ document.addEventListener('mousemove', (event) => {
     yaw -= event.movementX * sensitivity;
     pitch -= event.movementY * sensitivity;
 
-    pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
+    pitch = Math.max(-1.5, Math.min(1.5, pitch));
 
-    camera.rotation.order = 'YXZ';
-    camera.rotation.y = yaw;
-    camera.rotation.x = pitch;
+    updateCameraRotation();
 });
 
-document.addEventListener('keydown', (event) => {
+document.addEventListener("keydown", (event) => {
     keys[event.code] = true;
+
+    if (event.code === "Escape" && locked) {
+        document.exitPointerLock();
+    }
 });
 
-document.addEventListener('keyup', (event) => {
+document.addEventListener("keyup", (event) => {
     keys[event.code] = false;
 });
 
+window.addEventListener("blur", () => {
+    for (const key in keys) {
+        keys[key] = false;
+    }
+});
+
+// ------------------------------------------
+// START / PAUSE OVERLAY
+// ------------------------------------------
+
+const overlay = document.createElement("div");
+overlay.id = "start-overlay";
+
+overlay.innerHTML = `
+    <div class="start-content">
+        <h1>ENDLESS</h1>
+        <p>CLICK TO EXPLORE</p>
+        <span>WASD TO MOVE · MOUSE TO LOOK · SHIFT TO SPRINT · ESC TO PAUSE</span>
+    </div>
+`;
+
+document.body.appendChild(overlay);
+
+overlay.addEventListener("click", () => {
+    requestLock();
+});
+
+// ------------------------------------------
 // MOVEMENT
+// ------------------------------------------
+
 const clock = new THREE.Clock();
 
-function updatePlayer(delta) {
+function movePlayer(delta) {
     if (!locked) return;
 
-    const direction = new THREE.Vector3();
+    let forward = 0;
+    let sideways = 0;
 
-    const forward = new THREE.Vector3(
+    if (keys["KeyW"]) forward += 1;
+    if (keys["KeyS"]) forward -= 1;
+    if (keys["KeyD"]) sideways += 1;
+    if (keys["KeyA"]) sideways -= 1;
+
+    const inputLength = Math.sqrt(
+        forward * forward + sideways * sideways
+    );
+
+    if (inputLength === 0) return;
+
+    forward /= inputLength;
+    sideways /= inputLength;
+
+    const speed = keys["ShiftLeft"] || keys["ShiftRight"]
+        ? sprintSpeed
+        : walkSpeed;
+
+    const direction = new THREE.Vector3(
         -Math.sin(yaw),
         0,
         -Math.cos(yaw)
@@ -127,39 +186,55 @@ function updatePlayer(delta) {
         -Math.sin(yaw)
     );
 
-    if (keys['KeyW']) direction.add(forward);
-    if (keys['KeyS']) direction.sub(forward);
-    if (keys['KeyD']) direction.add(right);
-    if (keys['KeyA']) direction.sub(right);
+    const movement = new THREE.Vector3();
 
-    if (direction.lengthSq() > 0) {
-        direction.normalize();
+    movement.addScaledVector(direction, forward);
+    movement.addScaledVector(right, sideways);
 
-        const speed = keys['ShiftLeft'] ? 8 : playerSpeed;
+    camera.position.addScaledVector(
+        movement,
+        speed * delta
+    );
 
-        camera.position.addScaledVector(
-            direction,
-            speed * delta
-        );
-    }
+    // Keep the player inside the mall
+    camera.position.x = THREE.MathUtils.clamp(
+        camera.position.x,
+        -21,
+        21
+    );
+
+    camera.position.z = THREE.MathUtils.clamp(
+        camera.position.z,
+        -43,
+        43
+    );
+
+    camera.position.y = playerHeight;
 }
 
-// ANIMATION
+// ------------------------------------------
+// ANIMATION LOOP
+// ------------------------------------------
+
 function animate() {
     requestAnimationFrame(animate);
 
     const delta = Math.min(clock.getDelta(), 0.05);
 
-    updatePlayer(delta);
+    movePlayer(delta);
 
     renderer.render(scene, camera);
 }
 
 animate();
 
+// ------------------------------------------
 // RESIZE
-window.addEventListener('resize', () => {
+// ------------------------------------------
+
+window.addEventListener("resize", () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
+
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
