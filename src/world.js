@@ -33,6 +33,54 @@ export function createMall(scene) {
     const white = material("white", 0xf0eee8);
     const gold = material("gold", 0xb49a69, 0.3, 0.6);
 
+
+// VIBRANT COLOR PALETTE
+
+const neonPink = new THREE.MeshStandardMaterial({
+    color: 0xff36a6,
+    emissive: 0xff087f,
+    emissiveIntensity: 2
+});
+
+const neonBlue = new THREE.MeshStandardMaterial({
+    color: 0x26bfff,
+    emissive: 0x008cff,
+    emissiveIntensity: 2
+});
+
+const neonPurple = new THREE.MeshStandardMaterial({
+    color: 0xa855ff,
+    emissive: 0x7315ff,
+    emissiveIntensity: 2
+});
+
+const neonGreen = new THREE.MeshStandardMaterial({
+    color: 0x54ff9b,
+    emissive: 0x00bb58,
+    emissiveIntensity: 1.5
+});
+
+const neonOrange = new THREE.MeshStandardMaterial({
+    color: 0xffa43a,
+    emissive: 0xff6500,
+    emissiveIntensity: 1.5
+});
+
+const neonYellow = new THREE.MeshStandardMaterial({
+    color: 0xffed69,
+    emissive: 0xffc400,
+    emissiveIntensity: 1.5
+});
+
+const colorPalette = [
+    0xff4f9a,
+    0x35c9ff,
+    0xb36bff,
+    0x55e6a5,
+    0xffa34f,
+    0xffe16b
+];
+
     function box(parent, x, y, z, w, h, d, mat, cast = true) {
         const mesh = new THREE.Mesh(
             new THREE.BoxGeometry(w, h, d),
@@ -214,33 +262,59 @@ export function createMall(scene) {
         box(group, frontX - side * 0.18, floorY + 4.05, z, 0.3, 0.65, 5.7, blackGlass);
 
         // Store sign letters
-        const canvas = document.createElement("canvas");
-        canvas.width = 512;
-        canvas.height = 128;
+        // STORE SIGN LETTERS
 
-        const ctx = canvas.getContext("2d");
-        ctx.clearRect(0, 0, 512, 128);
-        ctx.fillStyle = "#f0eee8";
-        ctx.font = "bold 48px Arial";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(name, 256, 65);
+const signColors = [
+    "#ff65b5",
+    "#43cfff",
+    "#bd86ff",
+    "#65e9a6",
+    "#ffad58",
+    "#ffe477"
+];
 
-        const texture = new THREE.CanvasTexture(canvas);
-        const signMat = new THREE.MeshBasicMaterial({
-            map: texture,
-            transparent: true,
-            side: THREE.DoubleSide
-        });
+const signColor = signColors[index % signColors.length];
 
-        const sign = new THREE.Mesh(
-            new THREE.PlaneGeometry(5.1, 1.25),
-            signMat
-        );
+const canvas = document.createElement("canvas");
+canvas.width = 512;
+canvas.height = 128;
 
-        sign.position.set(frontX - side * 0.36, floorY + 4.05, z);
-        sign.rotation.y = side === 1 ? -Math.PI / 2 : Math.PI / 2;
-        group.add(sign);
+const ctx = canvas.getContext("2d");
+
+ctx.clearRect(0, 0, 512, 128);
+
+ctx.shadowColor = signColor;
+ctx.shadowBlur = 25;
+
+ctx.fillStyle = signColor;
+ctx.font = "bold 48px Arial";
+ctx.textAlign = "center";
+ctx.textBaseline = "middle";
+ctx.fillText(name, 256, 65);
+
+const texture = new THREE.CanvasTexture(canvas);
+
+const signMat = new THREE.MeshBasicMaterial({
+    map: texture,
+    transparent: true,
+    side: THREE.DoubleSide,
+    toneMapped: false
+});
+
+const sign = new THREE.Mesh(
+    new THREE.PlaneGeometry(5.1, 1.25),
+    signMat
+);
+
+sign.position.set(
+    frontX - side * 0.36,
+    floorY + 4.05,
+    z
+);
+
+sign.rotation.y = side === 1 ? -Math.PI / 2 : Math.PI / 2;
+
+group.add(sign);
 
         // Interior ceiling
         box(group, centerX, floorY + 4.4, z, 11, 0.15, 7.2, white);
