@@ -141,7 +141,7 @@ export function createMall(scene) {
     }
 
     // Upper-level ceiling edge
-    box(scene, 0, 10.5, 0, 46, 0.5, 90, ceiling, false);
+    box(scene, 0, 12.2, 0, 46, 0.5, 90, ceiling, false);
 
     // --------------------------------------------------
     // STORE CONSTRUCTION
@@ -387,18 +387,18 @@ export function createMall(scene) {
 
     // Main ceiling beams
     for (let z = -40; z <= 40; z += 10) {
-        box(scene, 0, 10.05, z, 46, 0.35, 0.5, metal);
+        box(scene, 0, 11.75, z, 46, 0.35, 0.5, metal);
     }
 
     for (let x = -20; x <= 20; x += 5) {
-        box(scene, x, 10.05, 0, 0.35, 0.35, 86, metal);
+        box(scene, x, 11.75, 0, 0.35, 0.35, 86, metal);
     }
 
     // Skylight sections
     for (let z = -30; z <= 30; z += 15) {
-        box(scene, 0, 10.3, z, 17, 0.08, 11, glass, false);
-        box(scene, 0, 10.42, z - 5.5, 17, 0.12, 0.15, metal);
-        box(scene, 0, 10.42, z + 5.5, 17, 0.12, 0.15, metal);
+        box(scene, 0, 12.0, z, 17, 0.08, 11, glass, false);
+        box(scene, 0, 12.12, z - 5.5, 17, 0.12, 0.15, metal);
+        box(scene, 0, 12.12, z + 5.5, 17, 0.12, 0.15, metal);
     }
 
     // --------------------------------------------------
