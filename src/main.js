@@ -6,8 +6,8 @@ import { createMall } from "./world.js";
 // ------------------------------------------
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x9da6ad);
-scene.fog = new THREE.Fog(0x9da6ad, 35, 105);
+scene.background = new THREE.Color(0x8499ae);
+scene.fog = new THREE.Fog(0x8499ae, 55, 125);
 
 const camera = new THREE.PerspectiveCamera(
     75,
@@ -34,7 +34,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.15;
+renderer.toneMappingExposure = 1.5;
 
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
