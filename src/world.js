@@ -261,7 +261,6 @@ const colorPalette = [
         // Signboard
         box(group, frontX - side * 0.18, floorY + 4.05, z, 0.3, 0.65, 5.7, blackGlass);
 
-        // Store sign letters
         // STORE SIGN LETTERS
 
 const signColors = [
@@ -341,9 +340,38 @@ group.add(sign);
             );
         }
 
-        // Warm shop lighting
-        light(centerX, floorY + 3.9, z, 0xffe7c5, 1.7, 12, group);
+        // COLORFUL STORE LIGHTING
 
+const shopLights = [
+    0xff3f9c,
+    0x27bfff,
+    0x9b50ff,
+    0x40ffa1,
+    0xff923c,
+    0xffdf65
+];
+
+const shopColor = shopLights[index % shopLights.length];
+
+light(
+    centerX,
+    floorY + 3.9,
+    z,
+    shopColor,
+    3.0,
+    17,
+    group
+);
+
+light(
+    centerX,
+    floorY + 3.5,
+    z,
+    0xffe8d2,
+    1.5,
+    10,
+    group
+);
         return group;
     }
 
@@ -608,6 +636,122 @@ group.add(sign);
     for (let z = -35; z <= 35; z += 14) {
         box(scene, 0, 0.02, z, 7, 0.025, 0.12, gold, false);
     }
+
+    // --------------------------------------------------
+// COLORFUL MALL LIGHTING DETAILS
+// --------------------------------------------------
+
+// Colored light strips along the balconies
+const balconyColors = [
+    neonBlue,
+    neonPink,
+    neonPurple,
+    neonGreen
+];
+
+for (let i = 0; i < balconyColors.length; i++) {
+    const z = -30 + i * 20;
+
+    box(
+        scene,
+        -11.0,
+        6.9,
+        z,
+        0.12,
+        0.08,
+        12,
+        balconyColors[i],
+        false
+    );
+
+    box(
+        scene,
+        11.0,
+        6.9,
+        z,
+        0.12,
+        0.08,
+        12,
+        balconyColors[i],
+        false
+    );
+}
+
+// Colorful decorative ceiling panels
+for (let i = 0; i < 6; i++) {
+    const x = -15 + i * 6;
+
+    const colors = [
+        neonBlue,
+        neonPurple,
+        neonPink,
+        neonOrange,
+        neonGreen,
+        neonYellow
+    ];
+
+    box(
+        scene,
+        x,
+        11.65,
+        0,
+        0.18,
+        0.08,
+        55,
+        colors[i],
+        false
+    );
+}
+
+// Glowing decorative columns around the atrium
+for (const x of [-9.7, 9.7]) {
+    for (let z = -30; z <= 30; z += 30) {
+        const color = colorPalette[
+            Math.abs(Math.floor(z / 10) + (x > 0 ? 2 : 0)) % colorPalette.length
+        ];
+
+        const glow = new THREE.MeshStandardMaterial({
+            color,
+            emissive: color,
+            emissiveIntensity: 1.4
+        });
+
+        box(
+            scene,
+            x,
+            5.2,
+            z,
+            0.12,
+            7,
+            0.12,
+            glow,
+            false
+        );
+    }
+}
+
+// Colorful floor inlays
+for (let i = 0; i < 8; i++) {
+    const z = -35 + i * 10;
+
+    box(
+        scene,
+        0,
+        0.035,
+        z,
+        5,
+        0.025,
+        0.08,
+        balconyColors[i % balconyColors.length],
+        false
+    );
+}
+
+// Additional colored ambient lighting
+light(-8, 7, -10, 0x277dff, 5, 35);
+light(8, 7, 10, 0xff38a5, 5, 35);
+light(0, 9, -30, 0x8b45ff, 4, 30);
+light(0, 9, 30, 0xff9b38, 4, 30);
 
     return {
         bounds: {
